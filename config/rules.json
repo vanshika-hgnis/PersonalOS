@@ -1,0 +1,87 @@
+{
+  "classification_rules": {
+    "url": {
+      "patterns": ["http://", "https://", "www."],
+      "extensions": [],
+      "tags": ["link", "web"],
+      "priority": 1
+    },
+    "pdf": {
+      "patterns": ["http://", "https://", "www."],
+      "extensions": [".pdf"],
+      "tags": ["document", "pdf"],
+      "priority": 2
+    },
+    "note": {
+      "patterns": [],
+      "extensions": [],
+      "tags": ["note", "text"],
+      "priority": 3,
+      "min_word_count": 3
+    },
+    "media": {
+      "patterns": [],
+      "extensions": [".jpg", ".jpeg", ".png", ".gif", ".mp4", ".mov", ".mp3"],
+      "tags": ["media", "file"],
+      "priority": 4
+    }
+  },
+  "keyword_categories": {
+    "productivity": [
+      "todo", "task", "reminder", "deadline", "meeting", "schedule",
+      "follow-up", "action", "priority", "urgent"
+    ],
+    "research": [
+      "article", "paper", "study", "research", "analysis", "report",
+      "journal", "publication", "thesis", "review"
+    ],
+    "learning": [
+      "tutorial", "course", "learn", "guide", "how-to", "documentation",
+      "docs", "wiki", "explanation", "introduction"
+    ],
+    "entertainment": [
+      "video", "music", "movie", "show", "game", "podcast",
+      "stream", "watch", "listen", "play"
+    ],
+    "shopping": [
+      "buy", "price", "deal", "discount", "offer", "shop",
+      "product", "review", "order", "purchase"
+    ],
+    "news": [
+      "news", "update", "breaking", "latest", "report", "announcement",
+      "press", "release", "headline", "story"
+    ]
+  },
+  "notification_rules": {
+    "url": {
+      "enabled": true,
+      "message_template": "New link saved: {title} - {url}",
+      "channels": ["log"]
+    },
+    "pdf": {
+      "enabled": true,
+      "message_template": "New PDF saved: {filename} from {url}",
+      "channels": ["log"]
+    },
+    "note": {
+      "enabled": true,
+      "message_template": "New note saved: {preview}",
+      "channels": ["log"]
+    },
+    "media": {
+      "enabled": false,
+      "message_template": "New media file: {filename}",
+      "channels": ["log"]
+    }
+  },
+  "storage": {
+    "base_path": "resources",
+    "folders": {
+      "url": "links",
+      "pdf": "documents",
+      "note": "notes",
+      "media": "media",
+      "unknown": "inbox"
+    }
+  }
+}
