@@ -3,8 +3,10 @@ Tests for src/lambdas/notification_sender.py
 """
 
 import logging
+from unittest.mock import MagicMock, patch
+
 import pytest
-from src.lambdas.notification_sender import send_notification
+from src.lambdas.notification_sender import send_notification, _send_whatsapp
 
 
 class TestSendNotification:
@@ -89,3 +91,56 @@ class TestLambdaHandler:
         }
         response = lambda_handler(event, None)
         assert response["statusCode"] == 200
+
+
+class TestSendWhatsAppChannel:
+    """Tests for the WhatsApp notification channel handler."""
+
+    def test_send_whatsapp_success(self):
+        """_send_whatsapp returns status=sent when the API call succeeds."""
+        mock_response = {"messages": [{"id": "wamid.abc123"}]}
+        with patch("src.lambdas.notification_sender.send_text_message", return_value=mock_response) as mock_send:
+            result = _send_whatsapp("Hello self!")
+        mock_send.assert_called_once_with("Hello self!")
+        assert result["channel"] == "whatsapp"
+        assert result["status"] == "sent"
+        assert result["whatsapp_message_id"] == "wamid.abc123"
+        assert result["message"] == "Hello self!"
+
+    def test_send_whatsapp_api_error_returns_error_status(self):
+        """_send_whatsapp returns status=error (not raises) when the API fails."""
+        from src.utils.whatsapp_client import WhatsAppClientError
+        with patch("src.lambdas.notification_sender.send_text_message", side_effect=WhatsAppClientError("bad token")):
+            result = _send_whatsapp("Hello self!")
+        assert result["channel"] == "whatsapp"
+        assert result["status"] == "error"
+        assert "bad token" in result["error"]
+
+    def test_send_whatsapp_missing_credentials_returns_error_status(self):
+        """_send_whatsapp returns status=error when env vars are missing."""
+        import os
+        # Clear credentials in a scope-limited way to avoid test pollution
+        cleared = {k: "" for k in ("WHATSAPP_ACCESS_TOKEN", "WHATSAPP_PHONE_NUMBER_ID", "WHATSAPP_RECIPIENT_NUMBER")}
+        with patch.dict(os.environ, cleared):
+            for var in cleared:
+                os.environ.pop(var, None)
+            result = _send_whatsapp("Test message")
+        assert result["channel"] == "whatsapp"
+        assert result["status"] == "error"
+
+    def test_send_notification_includes_whatsapp_channel(self):
+        """send_notification attempts the whatsapp channel for url type."""
+        mock_response = {"messages": [{"id": "wamid.xyz"}]}
+        resource = {"storage_path": "resources/links", "text": ""}
+        classification = {
+            "type": "url",
+            "tags": ["link", "web"],
+            "urls": ["https://example.com"],
+            "metadata": {"domain": "example.com"},
+        }
+        with patch("src.lambdas.notification_sender.send_text_message", return_value=mock_response):
+            result = send_notification(resource, classification)
+        channel_names = [ch["channel"] for ch in result["channels_attempted"]]
+        assert "whatsapp" in channel_names
+        whatsapp_result = next(ch for ch in result["channels_attempted"] if ch["channel"] == "whatsapp")
+        assert whatsapp_result["status"] == "sent"

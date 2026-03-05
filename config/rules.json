@@ -56,17 +56,17 @@
     "url": {
       "enabled": true,
       "message_template": "New link saved: {title} - {url}",
-      "channels": ["log"]
+      "channels": ["log", "whatsapp"]
     },
     "pdf": {
       "enabled": true,
       "message_template": "New PDF saved: {filename} from {url}",
-      "channels": ["log"]
+      "channels": ["log", "whatsapp"]
     },
     "note": {
       "enabled": true,
       "message_template": "New note saved: {preview}",
-      "channels": ["log"]
+      "channels": ["log", "whatsapp"]
     },
     "media": {
       "enabled": false,

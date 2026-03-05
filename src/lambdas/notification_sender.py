@@ -16,6 +16,8 @@ import logging
 import os
 from typing import Any
 
+from src.utils.whatsapp_client import WhatsAppClientError, send_text_message
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -61,8 +63,21 @@ def _send_log(message: str) -> dict:
     return {"channel": "log", "message": message, "status": "sent"}
 
 
+def _send_whatsapp(message: str) -> dict:
+    """Send *message* to the configured self-chat WhatsApp number."""
+    try:
+        response = send_text_message(message)
+        message_id = (response.get("messages") or [{}])[0].get("id", "")
+        logger.info("[NOTIFICATION] WhatsApp message sent (id=%s)", message_id)
+        return {"channel": "whatsapp", "message": message, "status": "sent", "whatsapp_message_id": message_id}
+    except WhatsAppClientError as exc:
+        logger.error("[NOTIFICATION] WhatsApp send failed: %s", exc)
+        return {"channel": "whatsapp", "message": message, "status": "error", "error": str(exc)}
+
+
 _CHANNEL_HANDLERS = {
     "log": _send_log,
+    "whatsapp": _send_whatsapp,
 }
 
 
